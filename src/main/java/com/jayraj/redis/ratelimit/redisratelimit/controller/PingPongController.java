@@ -1,6 +1,5 @@
 package com.jayraj.redis.ratelimit.redisratelimit.controller;
 
-import org.redisson.Redisson;
 import org.redisson.api.RRateLimiterReactive;
 import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
@@ -11,11 +10,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import reactor.core.publisher.Mono;
+import redis.embedded.RedisServer;
 
 @RestController
 public class PingPongController {
     @Autowired
     private RedissonReactiveClient redissonClient;
+
+    @Autowired
+    RedisServer redisServer;
 
     @GetMapping("/ping")
     public Mono<String> callPing(@RequestParam Integer clientId) {
@@ -34,6 +37,12 @@ public class PingPongController {
     public Mono<Boolean> initRateLimit(@RequestParam Integer clientId) {
 
         RRateLimiterReactive limiter = redissonClient.getRateLimiter(clientId.toString());
-        return limiter.trySetRate(RateType.OVERALL, 3, 30, RateIntervalUnit.SECONDS);
+        return limiter.trySetRate(RateType.OVERALL, 3, 15, RateIntervalUnit.SECONDS);
+    }
+
+    @GetMapping("/stop")
+    public boolean stopRedisServer() {
+        redisServer.stop();
+        return true;
     }
 }
